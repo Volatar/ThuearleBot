@@ -3,6 +3,7 @@ import discord
 import random
 import datetime
 from dotenv import load_dotenv
+from discord.ext import commands
 
 
 def main():
@@ -11,24 +12,21 @@ def main():
 
     intents = discord.Intents.default()
     intents.members = True
-    client = discord.Client(intents=intents)
+    bot = commands.Bot(command_prefix='!', intents=intents)
 
-    @client.event
+    @bot.event
     async def on_ready():
-        print(f'{client.user} has connected to Discord!')
+        print(f'{bot.user.name} has connected to Discord!')
 
-        print(f'{client.user} is connected to the following guilds:')
-        for guild in client.guilds:
+        print(f'{bot.user.name} is connected to the following guilds:')
+        for guild in bot.guilds:
             print(f'{guild.name} (id: {guild.id})')
             members = '\n - '.join([member.name for member in guild.members])
             print(f'Guild Members:\n - {members}')
 
-    @client.event
-    async def on_message(message):
-        if message.author == client.user:
-            return
-
-        wh40k_responses = [
+    @bot.command(name='heresy', help='Responds with a heresy detected gif')
+    async def heresy(ctx):
+        heresy_responses = [
             'https://tenor.com/view/heresy-detected-war-hammer-40k-gif-9829547',
             'https://tenor.com/view/40k-astartes-bolter-boltgun-dakka-gif-17604583',
             'https://tenor.com/view/warhammer-gif-19055033',
@@ -39,9 +37,13 @@ def main():
             'https://tenor.com/view/penny-polendina-rwby-heresy-heretic-rooster-teeth-gif-15607459',
         ]
 
-        if message.content == '!wh40k':
-            response = random.choice(wh40k_responses)
-            await message.channel.send(response)
+        response = random.choice(heresy_responses)
+        await ctx.send(response)
+
+    @bot.event
+    async def on_message(message):
+        if message.author == bot.user:
+            return
 
         tableflip_responses = [
             '┬─┬ ノ( ゜-゜ノ) Here you go, flip it again.',
@@ -64,7 +66,15 @@ def main():
             response = random.choice(tableflip_responses)
             await message.channel.send(response)
 
-    @client.event
+        if message.content == ':remfive:':
+            await message.channel.send(':ramfive:')
+
+        if message.content == ':ramfive:':
+            await message.channel.send(':remfive:')
+
+        await bot.process_commands(message)
+
+    @bot.event
     async def on_error(event, *args, **kwargs):
         with open('err.log', 'a') as f:
             if event == 'on_message':
@@ -72,7 +82,7 @@ def main():
             else:
                 raise
 
-    client.run(TOKEN)
+    bot.run(TOKEN)
 
 
 if __name__ == '__main__':
