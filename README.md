@@ -12,4 +12,4 @@ DISCORD_TOKEN=yourbottokengoeshere
 
 # Features
 - /tableflip - Bot will respond with a quip or gif emphasizing the action.
-- !wh40k - Bot will respond with a heresy detected gif
+- !heresy - Bot will respond with a heresy detected gif
