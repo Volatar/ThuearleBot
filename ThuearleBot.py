@@ -5,6 +5,8 @@ import datetime
 import codecs
 from dotenv import load_dotenv
 from discord.ext import commands
+import sqlite3
+from dbconn import dbconnect
 
 import tbregex
 
@@ -20,15 +22,32 @@ def main():
     bot = commands.Bot(command_prefix='!', intents=intents)
 
     print(f"{datetime.datetime.utcnow()}: Loading commands into memory:")
-    with codecs.open('commands/tableflip.txt', encoding='utf-8') as f:
-        tableflip_responses = f.readlines()
-        print(f'{datetime.datetime.utcnow()}: tableflip loaded')
-    with open('commands/heresy.txt') as f:
-        heresy_responses = f.readlines()
-        print(f'{datetime.datetime.utcnow()}: heresy loaded')
-    with open('commands/gitgud.txt') as f:
-        gitgud_responses = f.readlines()
-        print(f'{datetime.datetime.utcnow()}: gitgud loaded')
+    try:
+        print(f"{datetime.datetime.utcnow()}: Connecting to database")
+        db_conn = dbconnect('database/commandsDB.db')
+
+        cursor = db_conn.cursor()
+
+        tableflip_responses = []
+        data = cursor.execute(f'SELECT response FROM tableflip')
+        for row in data:
+            tableflip_responses.append(row[0])
+        print(f"{datetime.datetime.utcnow()}: loaded tableflip")
+
+        heresy_responses = []
+        data = cursor.execute(f'SELECT response FROM heresy')
+        for row in data:
+            heresy_responses.append(row[0])
+        print(f"{datetime.datetime.utcnow()}: loaded heresy")
+
+        gitgud_responses = []
+        data = cursor.execute(f'SELECT response FROM gitgud')
+        for row in data:
+            gitgud_responses.append(row[0])
+        print(f"{datetime.datetime.utcnow()}: loaded gitgud")
+
+    except sqlite3.Error as e:
+        print(e)  # TODO: replace with proper error logging code
 
     @bot.event
     async def on_ready():
@@ -71,7 +90,7 @@ def main():
 
     @bot.event
     async def on_error(event, *args, **kwargs):
-        with open('errorLog.log', 'a') as errorLog:
+        with open('errorLog.log', 'a') as errorLog:   # TODO: replace with proper error logging code
             if event == 'on_message':
                 errorLog.write(f'{datetime.datetime.utcnow()}: Unhandled message: {args[0]}\n')
             else:
