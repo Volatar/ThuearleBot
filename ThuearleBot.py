@@ -2,8 +2,11 @@ import os
 import discord
 import random
 import datetime
+import codecs
 from dotenv import load_dotenv
 from discord.ext import commands
+
+import tbregex
 
 
 def main():
@@ -16,13 +19,16 @@ def main():
     intents.members = True
     bot = commands.Bot(command_prefix='!', intents=intents)
 
-    print("Loading commands into memory:")
-    with open('commands/tableflip.txt') as f:
+    print(f"{datetime.datetime.utcnow()}: Loading commands into memory:")
+    with codecs.open('commands/tableflip.txt', encoding='utf-8') as f:
         tableflip_responses = f.readlines()
-        print('tableflip loaded')
+        print(f'{datetime.datetime.utcnow()}: tableflip loaded')
     with open('commands/heresy.txt') as f:
         heresy_responses = f.readlines()
-        print('heresy loaded')
+        print(f'{datetime.datetime.utcnow()}: heresy loaded')
+    with open('commands/gitgud.txt') as f:
+        gitgud_responses = f.readlines()
+        print(f'{datetime.datetime.utcnow()}: gitgud loaded')
 
     @bot.event
     async def on_ready():
@@ -39,6 +45,11 @@ def main():
         response = random.choice(heresy_responses)
         await ctx.send(response)
 
+    @bot.command(name='gitgud', help='Responds with a \"Git Gud\" or Dark Souls gif')
+    async def gitgud(ctx):
+        response = random.choice(gitgud_responses)
+        await ctx.send(response)
+
     @bot.event
     async def on_message(message):
         if message.author == bot.user:
@@ -48,10 +59,11 @@ def main():
             response = random.choice(tableflip_responses)
             await message.channel.send(response)
 
-        if message.content == '<:remfive:469906494163255316>':
+        # TODO: Make it wait and see if someone else responds first before responding. Gotta learn timers.
+        if tbregex.remfive.match(message.content):
             await message.channel.send('<:ramfive:469906460134866956>')
 
-        if message.content == '<:ramfive:469906460134866956>':
+        if tbregex.ramfive.match(message.content):
             await message.channel.send('<:remfive:469906494163255316>')
 
         # needed for the bot to process regular commands after parsing the message for custom text
@@ -59,9 +71,9 @@ def main():
 
     @bot.event
     async def on_error(event, *args, **kwargs):
-        with open('err.log', 'a') as errorlog:
+        with open('errorLog.log', 'a') as errorLog:
             if event == 'on_message':
-                errorlog.write(f'{datetime.datetime.utcnow()}: Unhandled message: {args[0]}\n')
+                errorLog.write(f'{datetime.datetime.utcnow()}: Unhandled message: {args[0]}\n')
             else:
                 raise
 
