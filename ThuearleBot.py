@@ -1,7 +1,6 @@
 import os
 import discord
 import random
-import datetime
 from dotenv import load_dotenv
 from discord.ext import commands
 import sqlite3
@@ -25,12 +24,13 @@ def main():
     logger.addHandler(file_logger)
 
     logger.info("Starting bot")
-    load_dotenv()
-    TOKEN = os.getenv('DISCORD_TOKEN')
+    load_dotenv()  # loads the .env file
+    TOKEN = os.getenv('DISCORD_TOKEN')  # retrives the bot token from the .env file
     intents = discord.Intents.default()
-    intents.members = True
+    intents.members = True  # lets us read the memberlist
     bot = commands.Bot(command_prefix='!', intents=intents)
 
+    # import command responses from database
     logger.info("Loading commands into memory:")
     try:
         logger.info("Connecting to database")
@@ -57,25 +57,26 @@ def main():
         logger.debug("loaded gitgud")
 
         db_conn.close()
-
     except sqlite3.Error as e:
         logger.error(e)
 
     @bot.event
     async def on_ready():
+        # just some feedback that it's working
         logger.info(f"{bot.user.name} has connected to Discord!")
-
         logger.debug(f'{bot.user.name} is connected to the following guilds:')
         for guild in bot.guilds:
             logger.debug(f'{guild.name} (id: {guild.id})')
             members = '\n - '.join([member.name for member in guild.members])
             logger.debug(f'Guild Members:\n - {members}')
 
+    # !heresy (the WH40k kind)
     @bot.command(name='heresy', help='Responds with a heresy detected gif')
     async def heresy(ctx):
         response = random.choice(heresy_responses)
         await ctx.send(response)
 
+    # !gitgud (the dark souls kind)
     @bot.command(name='gitgud', help='Responds with a \"Git Gud\" or Dark Souls gif')
     async def gitgud(ctx):
         response = random.choice(gitgud_responses)
@@ -83,17 +84,19 @@ def main():
 
     @bot.event
     async def on_message(message):
+        # prevents bot from responding to itself
         if message.author == bot.user:
             return
 
+        # responds when someone sends /tableflip
         if message.content == '(╯°□°）╯︵ ┻━┻':
             response = random.choice(tableflip_responses)
             await message.channel.send(response)
 
+        # responds to remfive and ramfive with the opposite, since they are a pair emote
         # TODO: Make it wait and see if someone else responds first before responding. Gotta learn timers.
         if tbregex.remfive.match(message.content):
             await message.channel.send('<:ramfive:469906460134866956>')
-
         if tbregex.ramfive.match(message.content):
             await message.channel.send('<:remfive:469906494163255316>')
 
