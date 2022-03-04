@@ -2,29 +2,39 @@ import os
 import discord
 import random
 import datetime
-import codecs
 from dotenv import load_dotenv
 from discord.ext import commands
 import sqlite3
-from dbconn import dbconnect
+import logging
 
 import tbregex
-
+from dbconn import dbconnect
 
 def main():
-    print(f"{datetime.datetime.utcnow()}: Starting bot")
+    # starting logger
+    logger = logging.getLogger('log')
+    logger.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    console_logger = logging.StreamHandler()
+    console_logger.setLevel(logging.DEBUG)
+    console_logger.setFormatter(formatter)
+    logger.addHandler(console_logger)
+    file_logger = logging.FileHandler('errorLog.log', 'a')
+    file_logger.setLevel(logging.ERROR)
+    file_logger.setFormatter(formatter)
+    logger.addHandler(file_logger)
 
+    logger.info("Starting bot")
     load_dotenv()
     TOKEN = os.getenv('DISCORD_TOKEN')
-
     intents = discord.Intents.default()
     intents.members = True
     bot = commands.Bot(command_prefix='!', intents=intents)
 
-    print(f"{datetime.datetime.utcnow()}: Loading commands into memory:")
+    logger.info("Loading commands into memory:")
     try:
-        print(f"{datetime.datetime.utcnow()}: Connecting to database")
-        db_conn = dbconnect('database/commandsDB.db')
+        logger.info("Connecting to database")
+        db_conn = dbconnect('database/commandsDB.db', logger)
 
         cursor = db_conn.cursor()
 
@@ -32,32 +42,34 @@ def main():
         data = cursor.execute(f'SELECT response FROM tableflip')
         for row in data:
             tableflip_responses.append(row[0])
-        print(f"{datetime.datetime.utcnow()}: loaded tableflip")
+        logger.debug("loaded tableflip")
 
         heresy_responses = []
         data = cursor.execute(f'SELECT response FROM heresy')
         for row in data:
             heresy_responses.append(row[0])
-        print(f"{datetime.datetime.utcnow()}: loaded heresy")
+        logger.debug("loaded heresy")
 
         gitgud_responses = []
         data = cursor.execute(f'SELECT response FROM gitgud')
         for row in data:
             gitgud_responses.append(row[0])
-        print(f"{datetime.datetime.utcnow()}: loaded gitgud")
+        logger.debug("loaded gitgud")
+
+        db_conn.close()
 
     except sqlite3.Error as e:
-        print(e)  # TODO: replace with proper error logging code
+        logger.error(e)
 
     @bot.event
     async def on_ready():
-        print(f'{datetime.datetime.utcnow()}: {bot.user.name} has connected to Discord!')
+        logger.info(f"{bot.user.name} has connected to Discord!")
 
-        print(f'{bot.user.name} is connected to the following guilds:')
+        logger.debug(f'{bot.user.name} is connected to the following guilds:')
         for guild in bot.guilds:
-            print(f'{guild.name} (id: {guild.id})')
+            logger.debug(f'{guild.name} (id: {guild.id})')
             members = '\n - '.join([member.name for member in guild.members])
-            print(f'Guild Members:\n - {members}')
+            logger.debug(f'Guild Members:\n - {members}')
 
     @bot.command(name='heresy', help='Responds with a heresy detected gif')
     async def heresy(ctx):
@@ -90,11 +102,10 @@ def main():
 
     @bot.event
     async def on_error(event, *args, **kwargs):
-        with open('errorLog.log', 'a') as errorLog:   # TODO: replace with proper error logging code
-            if event == 'on_message':
-                errorLog.write(f'{datetime.datetime.utcnow()}: Unhandled message: {args[0]}\n')
-            else:
-                raise
+        if event == 'on_message':
+            logger.warning(f'Unhandled message: {args[0]}\n')
+        else:
+            raise
 
     bot.run(TOKEN)
 
