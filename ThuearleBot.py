@@ -1,5 +1,5 @@
 import os
-import discord
+import disnake
 import random
 from datetime import datetime
 from dotenv import load_dotenv
@@ -28,8 +28,7 @@ def main():
     logger.info("Starting bot")
     load_dotenv()  # loads the .env file
     TOKEN = os.getenv('DISCORD_TOKEN')  # retrives the bot token from the .env file
-    intents = discord.Intents.default()
-    intents.members = True  # lets us read the memberlist
+    intents = disnake.Intents.all()
     bot = MyBot(command_prefix='!', intents=intents)
 
     # import command responses from database
@@ -84,6 +83,15 @@ def main():
     @bot.command(name='gitgud', help='Responds with a \"Git Gud\" or Dark Souls gif')
     async def gitgud(ctx):
         response = random.choice(gitgud_responses)
+        await ctx.send(response)
+
+    # !userinfo
+    @bot.command(name='userinfo',
+                 help='displays user message count, when first seen, and when last seen. Case sensitive.')
+    async def userinfo(ctx, arg):
+        response = f"{arg} was first seen on {disnake.utils.format_dt(activitylog.get(arg).get('firstseen'))}, " \
+                   f"they were last seen on {disnake.utils.format_dt(activitylog.get(arg).get('lastseen'))}, " \
+                   f"and they have sent {activitylog.get(arg).get('messagecount')} messages in servers I monitor."
         await ctx.send(response)
 
     # !al (activity log debug command)

@@ -1,5 +1,5 @@
 import asyncio
-from discord.ext import commands
+from disnake.ext import commands
 from typing import Callable, Coroutine, Any
 
 
