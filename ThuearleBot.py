@@ -3,7 +3,6 @@ import discord
 import random
 from datetime import datetime
 from dotenv import load_dotenv
-from discord.ext import commands
 import sqlite3
 import logging
 from MyBot import MyBot
@@ -62,6 +61,7 @@ def main():
     except sqlite3.Error as e:
         logger.error(e)
 
+    # TODO: load from database at program start
     activitylog = {}
 
     @bot.event
@@ -110,13 +110,15 @@ def main():
         if tbregex.ramfive.match(message.content):
             await message.channel.send('<:remfive:469906494163255316>')
 
-        if not activitylog[message.author]:
-            activitylog.update({message.author:
+        # TODO: Adjust so that it uses full usernames rather than just changable nicknames
+        # TODO: save to database
+        if not activitylog.get(message.author.name):
+            activitylog.update({message.author.name:
                                 {"lastseen": datetime.utcnow(), "firstseen": datetime.utcnow(), "messagecount": 1}})
-        elif activitylog[message.author]:
-            authorinfo = activitylog.get(message.author)
+        elif activitylog.get(message.author.name):
+            authorinfo = activitylog.get(message.author.name)
             authorinfo.update({"lastseen": datetime.utcnow(), "messagecount": authorinfo.get("messagecount") + 1})
-            activitylog.update({message.author: {authorinfo}})
+            activitylog.update({message.author.name: authorinfo})
 
         # needed for the bot to process regular commands after parsing the message for custom text
         await bot.process_commands(message)
@@ -124,8 +126,12 @@ def main():
     @bot.event
     async def on_error(event, error, *args, **kwargs):
         if event == 'on_message':
+            logger.warning(type(error))
             logger.warning(f'Unhandled message: {args[0]}')
-            logger.warning(f'Message error: {error}\n')
+            logger.warning(f'Message error: {error}')
+            logger.warning(f'args: {args}')
+            logger.warning(f'kwargs: {kwargs}\n')
+
         else:
             raise
 
