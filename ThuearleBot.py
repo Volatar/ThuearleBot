@@ -1,13 +1,16 @@
 import os
 import discord
 import random
+from datetime import datetime
 from dotenv import load_dotenv
 from discord.ext import commands
 import sqlite3
 import logging
+from MyBot import MyBot
 
 import tbregex
 from dbconn import dbconnect
+
 
 def main():
     # starting logger
@@ -28,14 +31,13 @@ def main():
     TOKEN = os.getenv('DISCORD_TOKEN')  # retrives the bot token from the .env file
     intents = discord.Intents.default()
     intents.members = True  # lets us read the memberlist
-    bot = commands.Bot(command_prefix='!', intents=intents)
+    bot = MyBot(command_prefix='!', intents=intents)
 
     # import command responses from database
     logger.info("Loading commands into memory:")
     try:
         logger.info("Connecting to database")
         db_conn = dbconnect('database/commandsDB.db', logger)
-
         cursor = db_conn.cursor()
 
         tableflip_responses = []
@@ -60,6 +62,8 @@ def main():
     except sqlite3.Error as e:
         logger.error(e)
 
+    activitylog = {}
+
     @bot.event
     async def on_ready():
         # just some feedback that it's working
@@ -82,6 +86,12 @@ def main():
         response = random.choice(gitgud_responses)
         await ctx.send(response)
 
+    # !al (activity log debug command)
+    @bot.command(name='al', help='dumps activity log dictionary to debug logger')
+    async def al(ctx):
+        logger.debug(activitylog)
+        await ctx.send("activity log dumped to console")
+
     @bot.event
     async def on_message(message):
         # prevents bot from responding to itself
@@ -100,13 +110,22 @@ def main():
         if tbregex.ramfive.match(message.content):
             await message.channel.send('<:remfive:469906494163255316>')
 
+        if not activitylog[message.author]:
+            activitylog.update({message.author:
+                                {"lastseen": datetime.utcnow(), "firstseen": datetime.utcnow(), "messagecount": 1}})
+        elif activitylog[message.author]:
+            authorinfo = activitylog.get(message.author)
+            authorinfo.update({"lastseen": datetime.utcnow(), "messagecount": authorinfo.get("messagecount") + 1})
+            activitylog.update({message.author: {authorinfo}})
+
         # needed for the bot to process regular commands after parsing the message for custom text
         await bot.process_commands(message)
 
     @bot.event
-    async def on_error(event, *args, **kwargs):
+    async def on_error(event, error, *args, **kwargs):
         if event == 'on_message':
-            logger.warning(f'Unhandled message: {args[0]}\n')
+            logger.warning(f'Unhandled message: {args[0]}')
+            logger.warning(f'Message error: {error}\n')
         else:
             raise
 
