@@ -3,15 +3,16 @@ import disnake
 import random
 from datetime import datetime
 from dotenv import load_dotenv
-import sqlite3
+import aiosqlite
 import logging
 from MyBot import MyBot
+import asyncio
 
 import tbregex
 from dbconn import dbconnect
 
 
-def main():
+async def main():
     # starting logger
     logger = logging.getLogger('log')
     logger.setLevel(logging.DEBUG)
@@ -27,7 +28,7 @@ def main():
 
     logger.info("Starting bot")
     load_dotenv()  # loads the .env file
-    TOKEN = os.getenv('DISCORD_TOKEN')  # retrives the bot token from the .env file
+    TOKEN = os.getenv('DISCORD_TOKEN')  # retrieves the bot token from the .env file
     intents = disnake.Intents.all()
     bot = MyBot(command_prefix='!', intents=intents)
 
@@ -35,29 +36,28 @@ def main():
     logger.info("Loading commands into memory:")
     try:
         logger.info("Connecting to database")
-        db_conn = dbconnect('database/commandsDB.db', logger)
-        cursor = db_conn.cursor()
+        db_conn = await dbconnect('database/commandsDB.db', logger)
 
         tableflip_responses = []
-        data = cursor.execute(f'SELECT response FROM tableflip')
-        for row in data:
+        data = await db_conn.execute(f'SELECT response FROM tableflip')
+        for row in await data.fetchall():
             tableflip_responses.append(row[0])
         logger.debug("loaded tableflip")
 
         heresy_responses = []
-        data = cursor.execute(f'SELECT response FROM heresy')
-        for row in data:
+        data = await db_conn.execute(f'SELECT response FROM heresy')
+        for row in await data.fetchall():
             heresy_responses.append(row[0])
         logger.debug("loaded heresy")
 
         gitgud_responses = []
-        data = cursor.execute(f'SELECT response FROM gitgud')
-        for row in data:
+        data = await db_conn.execute(f'SELECT response FROM gitgud')
+        for row in await data.fetchall():
             gitgud_responses.append(row[0])
         logger.debug("loaded gitgud")
 
-        db_conn.close()
-    except sqlite3.Error as e:
+        await db_conn.commit()
+    except aiosqlite.Error as e:
         logger.error(e)
 
     # TODO: load from database at program start
@@ -118,7 +118,7 @@ def main():
         if tbregex.ramfive.match(message.content):
             await message.channel.send('<:remfive:469906494163255316>')
 
-        # TODO: Adjust so that it uses full usernames rather than just changable nicknames
+        # TODO: Adjust so that it uses full usernames rather than just changeable nicknames
         # TODO: save to database
         if not activitylog.get(message.author.name):
             activitylog.update({message.author.name:
@@ -147,4 +147,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())
