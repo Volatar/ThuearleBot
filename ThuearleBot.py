@@ -143,7 +143,10 @@ async def main():
         else:
             raise
 
-    bot.run(TOKEN)
+    try:
+        await bot.start(TOKEN)
+    finally:
+        await bot.close()
 
 
 if __name__ == '__main__':
