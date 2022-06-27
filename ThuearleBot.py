@@ -37,7 +37,7 @@ async def main():
     logger.info("Loading commands into memory:")
     try:
         logger.info("Connecting to database")
-        db_conn = await dbconnect('database/commandsDB.db', logger)
+        db_conn = await dbconnect('database/DB.db', logger)
 
         tableflip_responses = []
         data = await db_conn.execute(f'SELECT response FROM tableflip')
