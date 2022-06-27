@@ -6,9 +6,8 @@ import codecs
 
 
 async def autosave(bot, logger, activitylog, db_conn):
-    while not bot.is_closed:
-        await save(logger, activitylog, db_conn)
-        await asyncio.sleep(60)  # saves every 60 seconds
+    await save(logger, activitylog, db_conn)
+    await asyncio.sleep(60)  # saves every 60 seconds
 
 
 async def save(logger, activitylog, db_conn, debug=True):
