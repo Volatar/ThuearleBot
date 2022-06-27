@@ -19,7 +19,7 @@ async def dbcreate(debug=True):
     file_logger.setFormatter(formatter)
     logger.addHandler(file_logger)
 
-    db_conn = await dbconnect("database/commandsDB.db", logger)
+    db_conn = await dbconnect("database/DB.db", logger)
 
     # add here when adding commands
     commands = ["tableflip", "gitgud", "heresy"]
@@ -58,7 +58,7 @@ async def dbcreate(debug=True):
                     logger.debug(f"{command} ID: {row[0]} - Response: {row[1]}")
 
     except aiosqlite.Error as e:
-        print(e)
+        logger.error(e)
 
 if __name__ == '__main__':
     asyncio.run(dbcreate())

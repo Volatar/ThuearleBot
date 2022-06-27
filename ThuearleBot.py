@@ -90,8 +90,8 @@ async def main():
     @bot.command(name='userinfo',
                  help='displays user message count, when first seen, and when last seen. Case sensitive.')
     async def userinfo(ctx, arg):
-        response = f"{arg} was first seen on {disnake.utils.format_dt(activitylog.get(arg).get('firstseen'))}, " \
-                   f"they were last seen on {disnake.utils.format_dt(activitylog.get(arg).get('lastseen'))}, " \
+        response = f"{arg} was first seen by me on {disnake.utils.format_dt(activitylog.get(arg).get('firstseen'))}, " \
+                   f"they were last seen by me on {disnake.utils.format_dt(activitylog.get(arg).get('lastseen'))}, " \
                    f"and they have sent {activitylog.get(arg).get('messagecount')} messages in servers I monitor."
         await ctx.send(response)
 

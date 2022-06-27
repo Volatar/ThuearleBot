@@ -6,10 +6,13 @@ import codecs
 
 
 async def autosave(bot, logger, activitylog, db_conn):
-    await save(logger, activitylog, db_conn)
-    await asyncio.sleep(60)  # saves every 60 seconds
+    await bot.wait_until_ready()
+    while not bot.is_closed:
+        await save(logger, activitylog, db_conn)
+        await asyncio.sleep(60)  # saves every 60 seconds
 
 
+# noinspection PyListCreation
 async def save(logger, activitylog, db_conn, debug=True):
 
     create_sql = [f""" CREATE TABLE IF NOT EXISTS activitylog (
@@ -17,8 +20,9 @@ async def save(logger, activitylog, db_conn, debug=True):
                             name text NOT NULL,
                             lastseen text,
                             firstseen text,
-                            messagecount integer ); 
-                            DELETE FROM activitylog; """]
+                            messagecount integer ); """]
+
+    create_sql.append(f"DELETE FROM activitylog;")
 
     for user in activitylog:
         create_sql.append(f""" INSERT INTO activitylog (name, lastseen, firstseen, messagecount)
@@ -32,9 +36,10 @@ async def save(logger, activitylog, db_conn, debug=True):
         if debug:  # show our work in the console
             check = await db_conn.execute(f"SELECT * FROM activitylog")
             rows = await check.fetchall()
+            logger.debug("Data in activitylog database:")
             for row in rows:
                 logger.debug(f"ID: {row[0]} - Name: {row[1]} - Lastseen: {row[2]} "
                              f"- Firstseen: {row[3]} - Messagecount: {row[4]}")
 
     except aiosqlite.Error as e:
-        print(e)
+        logger.error(e)
