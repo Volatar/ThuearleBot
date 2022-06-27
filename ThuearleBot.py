@@ -10,6 +10,7 @@ import asyncio
 
 import tbregex
 from dbconn import dbconnect
+import autosave
 
 
 async def main():
@@ -100,6 +101,8 @@ async def main():
         logger.debug(activitylog)
         await ctx.send("activity log dumped to console")
 
+    # TODO: A command to shut down the bot nicely, with required permissions
+
     @bot.event
     async def on_message(message):
         # prevents bot from responding to itself
@@ -142,6 +145,8 @@ async def main():
 
         else:
             raise
+
+    bot.loop.create_task(autosave.autosave(bot, logger, activitylog, db_conn))  # set up autosave loop
 
     try:
         await bot.start(TOKEN)

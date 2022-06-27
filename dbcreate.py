@@ -19,7 +19,7 @@ async def dbcreate(debug=True):
     file_logger.setFormatter(formatter)
     logger.addHandler(file_logger)
 
-    db_conn = await dbconnect('database/commandsDB.db', logger)
+    db_conn = await dbconnect("database/commandsDB.db", logger)
 
     # add here when adding commands
     commands = ["tableflip", "gitgud", "heresy"]
@@ -42,7 +42,7 @@ async def dbcreate(debug=True):
 
         # insert data from files to table
         for command in commands:
-            with codecs.open(f'commands/{command}.txt', encoding='utf-8') as f:
+            with codecs.open(f"commands/{command}.txt", encoding="utf-8") as f:
                 print(f"opened commands/{command}.txt")
                 data = f.readlines()
                 for line in data:
@@ -52,7 +52,7 @@ async def dbcreate(debug=True):
 
         if debug:  # show our work in the console
             for command in commands:
-                check = await db_conn.execute(f'SELECT * FROM {command}')
+                check = await db_conn.execute(f"SELECT * FROM {command}")
                 rows = await check.fetchall()
                 for row in rows:
                     logger.debug(f"{command} ID: {row[0]} - Response: {row[1]}")
