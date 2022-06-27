@@ -32,6 +32,7 @@ async def main():
     TOKEN = os.getenv('DISCORD_TOKEN')  # retrieves the bot token from the .env file
     intents = disnake.Intents.all()
     bot = MyBot(command_prefix='!', intents=intents)
+    db_conn = False
 
     # import command responses from database
     logger.info("Loading commands into memory:")
@@ -146,7 +147,11 @@ async def main():
         else:
             raise
 
-    bot.loop.create_task(autosave.autosave(bot, logger, activitylog, db_conn))  # set up autosave loop
+    # set up autosave loop
+    if db_conn:
+        asyncio.create_task(autosave.autosave(bot, logger, activitylog, db_conn))
+    else:
+        logger.error("Cannot setup autosave to database without database connection.")
 
     try:
         await bot.start(TOKEN)
